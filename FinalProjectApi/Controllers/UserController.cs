@@ -68,4 +68,35 @@ public class UserController: Controller
       var user1 = service.GetUserByEmail(email);
       return Ok(new {token, user1});
    }
+
+    [HttpPut("{id:length(24)}")]
+   public async Task<IActionResult> UpdateUser(string id, User updatedUser)
+   {
+       var user = service.GetUser(id);
+
+       if (user == null)
+       {
+           return NotFound(); // 404 Not Found
+       }
+
+       updatedUser.Id = id; // Ensure the user ID is retained
+       await service.UpdateAsync(id, updatedUser);
+
+       return NoContent(); // 204 No Content
+   }
+
+   [HttpDelete("{id:length(24)}")]
+   public async Task<IActionResult> DeleteUser(string id)
+   {
+       var user = service.GetUser(id);
+
+       if (user == null)
+       {
+           return NotFound(); // 404 Not Found
+       }
+
+       await service.DeleteAsync(id);
+
+       return NoContent(); // 204 No Content
+   }
 }

@@ -26,4 +26,19 @@ public class ReportService
 
   public async Task RemoveAsync(string id) => await _reportCollection.DeleteOneAsync(x => x.Id == id);
 
+  public async Task<List<Report>> GetUncheckedReportsAsync()
+    {
+        return await _reportCollection.Find(report => report.Checked == false).ToListAsync();
+    }
+
+    public async Task<List<Report>> GetByModeratedByAsync(string moderatorId)
+{
+    return await _reportCollection.Find(x => x.ModeratedBy == moderatorId).ToListAsync();
+}
+
+public async Task<List<Report>> GetUnassignedReportsAsync()
+{
+    return await _reportCollection.Find(report => report.ModeratedBy == null).ToListAsync();
+}
+
 }

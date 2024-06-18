@@ -2,11 +2,11 @@
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using FinalProjectApi.Models;
-using System.IdentityModel.Tokens.Jwt;   // for JwtSecurityTokenHandler
-using System.Text;                       // for Encoding
-using Microsoft.IdentityModel.Tokens;    // for SecurityTokenDescriptor, SigningCredentials, SymmetricSecurityKey, SecurityAlgorithms
-using System.Security.Claims;  
-using Microsoft.AspNetCore.Mvc;          // for ClaimsIdentity, Claim, ClaimTypes
+using System.IdentityModel.Tokens.Jwt;
+using System.Text;
+using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Mvc;
 using BCrypt;
 using FinalProjectApi.Configurations;
 namespace FinalProjectApi.Services;
@@ -35,41 +35,42 @@ public class UserService
   {
     var existingUser = users.Find(u => u.Email == user.Email).FirstOrDefault();
     if (existingUser != null)
-            {
-                throw new Exception("Email is already taken");
-            }
+    {
+      throw new Exception("Email is already taken");
+    }
     user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
-            users.InsertOne(user);
-            return user;
+    users.InsertOne(user);
+    return user;
   }
 
-   public async Task UpdateAsync(string id, User updatedUser)
-        {
-            await users.ReplaceOneAsync(user => user.Id == id, updatedUser);
-        }
+  public async Task UpdateAsync(string id, User updatedUser)
+  {
+    await users.ReplaceOneAsync(user => user.Id == id, updatedUser);
+  }
 
   public string? Authenticate(string email, string password)
   {
     string storedHash = this.users.Find(x => x.Email == email).FirstOrDefault().Password;
-    
+
     bool isMatch = BCrypt.Net.BCrypt.Verify(password, storedHash);
-    
+
     Console.WriteLine(isMatch);
-    if(isMatch == false)
-       return null;
+    if (isMatch == false)
+      return null;
 
     var tokenHandler = new JwtSecurityTokenHandler();
 
     var tokenKey = Encoding.ASCII.GetBytes(key);
 
-    var tokenDescriptor = new SecurityTokenDescriptor(){
+    var tokenDescriptor = new SecurityTokenDescriptor()
+    {
       Subject = new ClaimsIdentity(new Claim[]{
         new Claim(ClaimTypes.Email, email),
       }),
 
       Expires = DateTime.UtcNow.AddHours(1),
 
-      SigningCredentials = new SigningCredentials (
+      SigningCredentials = new SigningCredentials(
         new SymmetricSecurityKey(tokenKey),
         SecurityAlgorithms.HmacSha256Signature
       )
@@ -80,8 +81,8 @@ public class UserService
     return tokenHandler.WriteToken(token);
   }
 
-public async Task UpdateUserHateCountAsync(string userId, int hateCountIncrement)
-{
+  public async Task UpdateUserHateCountAsync(string userId, int hateCountIncrement)
+  {
     var user = GetUser(userId);
     if (user == null) return;
     Console.WriteLine(user.HateCount);
@@ -89,37 +90,42 @@ public async Task UpdateUserHateCountAsync(string userId, int hateCountIncrement
     user.HateCount += hateCountIncrement;
     Console.WriteLine(user.HateCount);
     user.HateCount = Math.Max(user.HateCount, 0);
-    await UpdateAsync(user.Id, user); // Ensure the hate count does not go below 0
+    await UpdateAsync(user.Id, user);
     await CheckAndUpdateBanStatusAsync(user.Id);
-}
+  }
 
   public async Task CheckAndUpdateBanStatusAsync(string userId)
-        {
-            var user = GetUser(userId);
-            if (user == null) return;
+  {
+    var user = GetUser(userId);
+    if (user == null) return;
 
-            
-            if (user.HateCount > 20)
-            {
-                
-                user.BannedUntil = DateTime.MaxValue;
-            }
-            else if (user.HateCount > 15)
-            {
-                
-                user.BannedUntil = DateTime.Now.AddMonths(1);
-            }
-            else if (user.HateCount > 10)
-            {
-                
-                user.BannedUntil = DateTime.Now.AddDays(2);
-            }
-            else
-            {
-                
-                user.BannedUntil = DateTime.Now;
-            }
 
-            await UpdateAsync(user.Id, user);
-        }
+    if (user.HateCount > 20)
+    {
+
+      user.BannedUntil = DateTime.MaxValue;
+    }
+    else if (user.HateCount > 15)
+    {
+
+      user.BannedUntil = DateTime.Now.AddMonths(1);
+    }
+    else if (user.HateCount > 5)
+    {
+
+      user.BannedUntil = DateTime.Now.AddDays(2);
+    }
+    else
+    {
+
+      user.BannedUntil = DateTime.Now;
+    }
+
+    await UpdateAsync(user.Id, user);
+  }
+
+  public async Task DeleteAsync(string id)
+  {
+    await users.DeleteOneAsync(user => user.Id == id);
+  }
 }

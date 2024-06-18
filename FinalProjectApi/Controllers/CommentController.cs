@@ -213,7 +213,15 @@ public async Task<IActionResult> UnmarkAsHate(string commentId)
     return NoContent();
 }
 
+[HttpGet("byuser/{userId:length(24)}")]
+public async Task<IActionResult> GetByUserId(string userId)
+{
+    var commentsByUserId = await _commentService.GetByUserIdAsync(userId);
+    if (commentsByUserId.Any())
+        return Ok(commentsByUserId);
 
+    return NotFound("No comments found for the given user.");
+}
 
 
 

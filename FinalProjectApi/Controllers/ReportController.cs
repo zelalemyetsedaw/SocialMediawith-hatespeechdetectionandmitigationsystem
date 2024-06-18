@@ -39,8 +39,8 @@ public class ReportController : ControllerBase
    [HttpGet]
    public async Task<IActionResult> Get()
    {
-       var allDrivers = await _reportService.GetAsync();
-       if (allDrivers.Any())
+      var allDrivers = await _reportService.GetAsync();
+      if (allDrivers.Any())
          return Ok(allDrivers);
 
       return NotFound();
@@ -49,8 +49,8 @@ public class ReportController : ControllerBase
    [HttpPost]
    public async Task<IActionResult> Post(Report post)
    {
-    await _reportService.CreateAsync(post);
-    return CreatedAtAction(nameof(Get), new {id = post.Id},post);
+      await _reportService.CreateAsync(post);
+      return CreatedAtAction(nameof(Get), new { id = post.Id }, post);
 
    }
 
@@ -60,7 +60,7 @@ public class ReportController : ControllerBase
       var existingDriver = await _reportService.GetAsync(id);
 
       if (existingDriver is null)
-        return BadRequest();
+         return BadRequest();
 
       post.Id = existingDriver.Id;
 
@@ -75,7 +75,7 @@ public class ReportController : ControllerBase
 
       if (existingDriver is null)
       {
-        return BadRequest();
+         return BadRequest();
       }
 
       await _reportService.RemoveAsync(id);
@@ -84,17 +84,51 @@ public class ReportController : ControllerBase
    }
 
    [HttpPut("{reportId:length(24)}/check")]
-public async Task<IActionResult> CheckReport(string reportId)
+   public async Task<IActionResult> CheckReport(string reportId)
+   {
+      var report = await _reportService.GetAsync(reportId);
+      if (report == null) return NotFound("Report not found.");
+
+      report.Checked = true;
+      await _reportService.UpdateAsync(report);
+
+      return NoContent();
+   }
+
+   [HttpGet("unchecked")]
+   public async Task<ActionResult<List<Report>>> GetUncheckedReports()
+   {
+      var reports = await _reportService.GetUncheckedReportsAsync();
+      if (reports == null || reports.Count == 0)
+      {
+         return NotFound("No unchecked reports found.");
+      }
+
+      return Ok(reports);
+   }
+
+   [HttpGet("moderator/{moderatorId:length(24)}")]
+public async Task<IActionResult> GetByModeratedBy(string moderatorId)
 {
-    var report = await _reportService.GetAsync(reportId);
-    if (report == null) return NotFound("Report not found.");
+    var reports = await _reportService.GetByModeratedByAsync(moderatorId);
 
-    report.Checked = true;
-    await _reportService.UpdateAsync(report);
+    if (reports == null || reports.Count == 0)
+    {
+        return Ok();
+    }
 
-    return NoContent();
+    return Ok(reports);
 }
 
+[HttpGet("unassigned")]
+public async Task<ActionResult<List<Report>>> GetUnassignedReports()
+{
+    var reports = await _reportService.GetUnassignedReportsAsync();
+    if (reports == null || reports.Count == 0)
+    {
+        return NotFound("No unassigned reports found.");
+    }
 
-
+    return Ok(reports);
+}
 }

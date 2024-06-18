@@ -22,6 +22,7 @@ builder.Services.AddSingleton<PostService>();
 builder.Services.AddSingleton<CommentService>();
 builder.Services.AddSingleton<ReportService>();
 builder.Services.AddSingleton<StatisticsService>();
+builder.Services.AddSingleton<ModeratorService>();
 
 builder.Services.AddCors();
 builder.Services.AddAuthentication(x =>

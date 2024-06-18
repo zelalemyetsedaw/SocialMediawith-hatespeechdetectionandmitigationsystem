@@ -20,7 +20,7 @@ public class CommentService
   public async Task<Comment> GetAsync(string id) => await _commentCollection.Find(x => x.Id == id).FirstOrDefaultAsync();
 
   public async Task<List<Comment>> GetByPostIdAsync(string postId) =>
-              await _commentCollection.Find(x => x.PostId == postId).ToListAsync();
+              await _commentCollection.Find(x => x.PostId == postId && x.HasHate == false).ToListAsync();
   public async Task CreateAsync(Comment comment) => await _commentCollection.InsertOneAsync(comment);
   public async Task UpdateAsync(Comment comment) => await _commentCollection.ReplaceOneAsync(x => x.Id == comment.Id, comment);
 
@@ -30,4 +30,6 @@ public class CommentService
 
   public async Task<List<Comment>> GetWithoutHateSpeechAsync() => await _commentCollection.Find(x => x.HasHate == false).ToListAsync();
 
+public async Task<List<Comment>> GetByUserIdAsync(string userId) =>
+    await _commentCollection.Find(x => x.UserId == userId).ToListAsync();
 }
